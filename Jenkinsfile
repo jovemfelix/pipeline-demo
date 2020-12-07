@@ -8,6 +8,7 @@ openshift.withCluster() {
   env.STAGE1 = "${projectBase}-dev"
   env.STAGE2 = "${projectBase}-stage"
   env.STAGE3 = "${projectBase}-prod"
+  env.MAVEN_ARGS_APPEND = '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B'
 }
 
 pipeline {
@@ -29,6 +30,11 @@ pipeline {
     // Jenkins Master but this will also pull this same code to this slave
     stage('Git Checkout') {
       steps {
+        echo "JOB_NAME=${JOB_NAME}"
+        echo "APP_NAME=${APP_NAME}"
+        echo "STAGE0=${STAGE0}"
+        error 'a'
+
         // Turn off Git's SSL cert check, uncomment if needed
         // sh 'git config --global http.sslVerify false'
         git url: "${APPLICATION_SOURCE_REPO}"
@@ -38,14 +44,14 @@ pipeline {
     // Run Maven build, skipping tests
     stage('Build'){
       steps {
-        sh "mvn clean install -DskipTests=true -f ${POM_FILE}"
+        sh "mvn clean install -DskipTests=true -f ${POM_FILE} ${MAVEN_ARGS_APPEND}"
       }
     }
 
     // Run Maven unit tests
     stage('Unit Test'){
       steps {
-        sh "mvn test -f ${POM_FILE}"
+        sh "mvn test -f ${POM_FILE} ${MAVEN_ARGS_APPEND}"
       }
     }
 
