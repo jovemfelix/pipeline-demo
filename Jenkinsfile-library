@@ -1,0 +1,99 @@
+openshift.withCluster() {
+  env.NAMESPACE = openshift.project()
+  env.POM_FILE = env.BUILD_CONTEXT_DIR ? "${env.BUILD_CONTEXT_DIR}/pom.xml" : "pom.xml"
+  env.APP_NAME = "${env.JOB_NAME}".replaceAll(/-?pipeline-library?/, '').replaceAll(/-?${env.NAMESPACE}-?/, '').replaceAll("/", '')
+  echo "Starting Pipeline for ${APP_NAME}..."
+  def projectBase = "${env.NAMESPACE}".replaceAll(/-build/, '')
+  env.STAGE0 = "${projectBase}-build"
+  env.STAGE1 = "${projectBase}-dev"
+  env.STAGE2 = "${projectBase}-stage"
+  env.STAGE3 = "${projectBase}-prod"
+}
+
+library identifier: "jenkins-library@master", retriever: modernSCM(
+  [$class: "GitSCMSource",
+   remote: "https://gitlab.com/syvanen/jenkins-library.git"])
+
+pipeline {
+  // Use Jenkins Maven slave
+  // Jenkins will dynamically provision this as OpenShift Pod
+  // All the stages and steps of this Pipeline will be executed on this Pod
+  // After Pipeline completes the Pod is killed so every run will have clean
+  // workspace
+  agent {
+    label 'custom-maven'
+  }
+
+  // Pipeline Stages start here
+  // Requeres at least one stage
+  stages {
+
+    // Checkout source code
+    // This is required as Pipeline code is originally checkedout to
+    // Jenkins Master but this will also pull this same code to this slave
+    stage('Git Checkout') {
+      steps {
+        // Turn off Git's SSL cert check, uncomment if needed
+        // sh 'git config --global http.sslVerify false'
+        git url: "${APPLICATION_SOURCE_REPO}"
+      }
+    }
+
+    // Run Maven build, skipping tests
+    stage('Build'){
+      steps {
+        sh "mvn clean install -DskipTests=true -f ${POM_FILE}"
+      }
+    }
+
+    // Run Maven unit tests
+    stage('Unit Test'){
+      steps {
+        sh "mvn test -f ${POM_FILE}"
+      }
+    }
+
+    // Build Container Image using the artifacts produced in previous stages
+    stage('Build Container Image - Library'){
+       steps {
+         binaryBuild(projectName: "basic-spring-boot-build", buildConfigName: "spring-rest", artifactsDirectoryName: "target")
+       }
+    }
+
+    stage('Promote from Build to Dev - Library') {
+      steps {
+        tagImage(sourceImagePath: "${env.STAGE0}", sourceImageName: "${env.APP_NAME}", toImagePath: "${env.STAGE1}")
+      }
+    }
+
+    stage ('Verify Deployment to Dev - Library') {
+      steps {
+        verifyDeployment(projectName: "${STAGE1}", targetApp: "${APP_NAME}")
+      }
+    }
+
+    stage('Promote from Dev to Stage - Library') {
+      steps {
+        tagImage(sourceImagePath: "${env.STAGE1}", sourceImageName: "${env.APP_NAME}", toImagePath: "${env.STAGE2}")
+      }
+    }
+
+    stage ('Verify Deployment to Stage - Library') {
+      steps {
+        verifyDeployment(projectName: "${STAGE2}", targetApp: "${APP_NAME}")
+      }
+    }
+    stage('Promote from Stage to Prod - Library') {
+      steps {
+        tagImage(sourceImagePath: "${env.STAGE2}", sourceImageName: "${env.APP_NAME}", toImagePath: "${env.STAGE3}")
+      }
+    }
+
+    stage ('Verify Deployment to Prod - Library') {
+      steps {
+        verifyDeployment(projectName: "${STAGE3}", targetApp: "${APP_NAME}")
+      }
+    }
+
+  }
+}
