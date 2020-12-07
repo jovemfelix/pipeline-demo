@@ -10,9 +10,7 @@ openshift.withCluster() {
   env.STAGE3 = "${projectBase}-prod"
 }
 
-library identifier: "jenkins-library@master", retriever: modernSCM(
-  [$class: "GitSCMSource",
-   remote: "https://gitlab.com/syvanen/jenkins-library.git"])
+library identifier: "jenkins-library@master", retriever: modernSCM([$class: "GitSCMSource", remote: "https://github.com/jovemfelix/jenkins-library.git"])
 
 pipeline {
   // Use Jenkins Maven slave
@@ -21,7 +19,7 @@ pipeline {
   // After Pipeline completes the Pod is killed so every run will have clean
   // workspace
   agent {
-    label 'custom-maven'
+    label 'maven'
   }
 
   // Pipeline Stages start here
