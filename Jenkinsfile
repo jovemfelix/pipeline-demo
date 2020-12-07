@@ -33,7 +33,6 @@ pipeline {
         echo "JOB_NAME=${JOB_NAME}"
         echo "APP_NAME=${APP_NAME}"
         echo "STAGE0=${STAGE0}"
-        error 'a'
 
         // Turn off Git's SSL cert check, uncomment if needed
         // sh 'git config --global http.sslVerify false'
@@ -49,11 +48,11 @@ pipeline {
     }
 
     // Run Maven unit tests
-    stage('Unit Test'){
-      steps {
-        sh "mvn test -f ${POM_FILE} ${MAVEN_ARGS_APPEND}"
-      }
-    }
+//     stage('Unit Test'){
+//       steps {
+//         sh "mvn test -f ${POM_FILE} ${MAVEN_ARGS_APPEND}"
+//       }
+//     }
 
     // Build Container Image using the artifacts produced in previous stages
     stage('Build Container Image'){
