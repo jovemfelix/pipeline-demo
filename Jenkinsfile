@@ -1,9 +1,9 @@
 openshift.withCluster() {
   env.NAMESPACE = openshift.project()
   env.POM_FILE = env.BUILD_CONTEXT_DIR ? "${env.BUILD_CONTEXT_DIR}/pom.xml" : "pom.xml"
-  env.APP_NAME = "${JOB_NAME}".split('/').getAt(1).replaceAll(/-?pipeline-?/, '')
+  env.APP_NAME = "${JOB_NAME}".split('/')[1].replaceAll(/-?pipeline-?/, '')
   echo "Starting Pipeline for ${APP_NAME}..."
-  def projectBase = "${JOB_NAME}".split('/').getAt(0).replaceAll(/-?build-?/, '')
+  def projectBase = "${JOB_NAME}".split('/')[0].replaceAll(/-?build-?/, '')
   env.STAGE0 = "${projectBase}-build"
   env.STAGE1 = "${projectBase}-dev"
   env.STAGE2 = "${projectBase}-stage"
