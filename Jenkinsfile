@@ -17,15 +17,15 @@ pipeline {
   // After Pipeline completes the Pod is killed so every run will have clean
   // workspace
   agent {
-    label 'custom-maven-cached'
+    label 'maven'
   }
 
   // Pipeline Stages start here
-  // Requeres at least one stage
+  // Requires at least one stage
   stages {
 
     // Checkout source code
-    // This is required as Pipeline code is originally checkedout to
+    // This is required as Pipeline code is originally checkout to
     // Jenkins Master but this will also pull this same code to this slave
     stage('Git Checkout') {
       steps {
