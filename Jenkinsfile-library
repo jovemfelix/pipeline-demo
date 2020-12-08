@@ -14,22 +14,12 @@ openshift.withCluster() {
 library identifier: "jenkins-library@master", retriever: modernSCM([$class: "GitSCMSource", remote: "https://github.com/jovemfelix/jenkins-library.git"])
 
 pipeline {
-  // Use Jenkins Maven slave
-  // Jenkins will dynamically provision this as OpenShift Pod
-  // All the stages and steps of this Pipeline will be executed on this Pod
-  // After Pipeline completes the Pod is killed so every run will have clean
-  // workspace
   agent {
     label 'maven'
   }
 
-  // Pipeline Stages start here
-  // Requeres at least one stage
   stages {
 
-    // Checkout source code
-    // This is required as Pipeline code is originally checkout to
-    // Jenkins Master but this will also pull this same code to this slave
     stage('Git Checkout') {
       steps {
         echo "JOB_NAME=${JOB_NAME}"
@@ -43,14 +33,12 @@ pipeline {
       }
     }
 
-    // Run Maven build, skipping tests
     stage('Build'){
       steps {
         sh "mvn clean package -DskipTests=true -f ${POM_FILE} ${MAVEN_ARGS_APPEND}"
       }
     }
 
-    // Run Maven unit tests
     stage('Unit Test'){
       steps {
         sh "mvn test -f ${POM_FILE}"
