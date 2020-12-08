@@ -1,7 +1,7 @@
 openshift.withCluster() {
   env.NAMESPACE = openshift.project()
   env.POM_FILE = env.BUILD_CONTEXT_DIR ? "${env.BUILD_CONTEXT_DIR}/pom.xml" : "pom.xml"
-  env.APP_NAME = "${JOB_NAME}".split('/')[1].replaceAll(/-?pipeline-?/, '')
+  env.APP_NAME = "${JOB_NAME}".split('/')[1].replaceAll("${JOB_NAME}".split('/')[0]+'-', '').replaceAll(/-?pipeline?/, '')
   echo "Starting Pipeline for ${APP_NAME}..."
   def projectBase = "${JOB_NAME}".split('/')[0].replaceAll(/-?build-?/, '')
   env.STAGE0 = "${projectBase}-build"
@@ -33,6 +33,8 @@ pipeline {
         echo "JOB_NAME=${JOB_NAME}"
         echo "APP_NAME=${APP_NAME}"
         echo "STAGE0=${STAGE0}"
+        echo "STAGE1=${STAGE1}"
+        echo "STAGE2=${STAGE2}"
 
         // Turn off Git's SSL cert check, uncomment if needed
         // sh 'git config --global http.sslVerify false'
@@ -43,7 +45,8 @@ pipeline {
     // Run Maven build, skipping tests
     stage('Build'){
       steps {
-        sh "mvn clean install -DskipTests=true -f ${POM_FILE} ${MAVEN_ARGS_APPEND}"
+        echo "" > /etc/ld.so.preload
+        sh "mvn clean package -DskipTests=true -f ${POM_FILE} ${MAVEN_ARGS_APPEND}"
       }
     }
 
