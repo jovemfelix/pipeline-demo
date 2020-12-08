@@ -2,7 +2,7 @@ openshift.withCluster() {
   env.NAMESPACE = openshift.project()
   env.POM_FILE = env.BUILD_CONTEXT_DIR ? "${env.BUILD_CONTEXT_DIR}/pom.xml" : "pom.xml"
   env.APP_NAME = "${JOB_NAME}".split('/')[1].replaceAll("${JOB_NAME}".split('/')[0]+'-', '').replaceAll(/-?pipeline?/, '')
-  echo "Starting Pipeline for ${APP_NAME}..."
+  echo "Starting Pipeline for [${APP_NAME}]..."
   def projectBase = "${JOB_NAME}".split('/')[0].replaceAll(/-?build-?/, '')
   env.STAGE0 = "${projectBase}-build"
   env.STAGE1 = "${projectBase}-dev"
@@ -50,11 +50,11 @@ pipeline {
     }
 
     // Run Maven unit tests
-//     stage('Unit Test'){
-//       steps {
-//         sh "mvn test -f ${POM_FILE} ${MAVEN_ARGS_APPEND}"
-//       }
-//     }
+    stage('Unit Test'){
+      steps {
+        sh "mvn test -f ${POM_FILE} ${MAVEN_ARGS_APPEND}"
+      }
+    }
 
     // Build Container Image using the artifacts produced in previous stages
     stage('Build Container Image'){
