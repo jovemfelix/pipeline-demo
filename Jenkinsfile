@@ -45,7 +45,7 @@ pipeline {
     // Run Maven build, skipping tests
     stage('Build'){
       steps {
-        echo "" > /etc/ld.so.preload
+        sh 'echo "" > /etc/ld.so.preload'
         sh "mvn clean package -DskipTests=true -f ${POM_FILE} ${MAVEN_ARGS_APPEND}"
       }
     }
